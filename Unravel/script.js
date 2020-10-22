@@ -102,10 +102,10 @@ const getCameraSelection = async () => {
 getCameraSelection();
 
 
-  let video = document.getElementById('videoInput');
+  let videoInput = document.getElementById('videoInput');
   let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   let dst = new cv.Mat(video.height, video.width, cv.CV_8UC1);
-  let cap = new cv.VideoCapture(video);
+  let cap = new cv.VideoCapture(videoInput);
 
   const FPS = 30;
   function processVideo() {
