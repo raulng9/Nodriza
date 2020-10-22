@@ -53,7 +53,7 @@ play.onclick = () => {
     startStream(updatedConstraints);
   }
 
-  startOpenCV();
+  processVideo();
 };
 
 const pauseStream = () => {
@@ -102,7 +102,6 @@ const getCameraSelection = async () => {
 getCameraSelection();
 
 
-function startOpenCV(){
   let video = document.getElementById('videoInput');
   let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
   let dst = new cv.Mat(video.height, video.width, cv.CV_8UC1);
@@ -132,4 +131,3 @@ function startOpenCV(){
 
 // schedule the first one.
 setTimeout(processVideo, 0);
-}
