@@ -109,12 +109,14 @@ getCameraSelection();
   const FPS = 30;
   function processVideo() {
     try {
+      /*
         if (!streaming) {
             // clean and stop.
             src.delete();
             dst.delete();
             return;
         }
+        */
         let begin = Date.now();
         // start processing.
         cap.read(src);
