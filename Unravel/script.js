@@ -126,7 +126,7 @@ getCameraSelection();
         let delay = 1000/FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
     } catch (err) {
-        console.error(err);
+        console.log(err);
     }
 };
 
