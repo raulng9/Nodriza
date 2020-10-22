@@ -2,11 +2,12 @@ feather.replace();
 
 const controls = document.querySelector('.controls');
 const cameraOptions = document.querySelector('.video-options>select');
-const video = document.querySelector('video');
+let video = document.querySelector('video');
 //const canvas = document.querySelector('canvasOutput');
 //const screenshotImage = document.querySelector('img');
 const buttons = [...controls.querySelectorAll('button')];
 let streamStarted = false;
+let streaming = false;
 
 const [play, pause] = buttons;
 
@@ -37,6 +38,7 @@ cameraOptions.onchange = () => {
 };
 
 play.onclick = () => {
+  streamStarted = true;
   if (streamStarted) {
     video.play();
     play.classList.add('d-none');
@@ -60,6 +62,7 @@ const pauseStream = () => {
   video.pause();
   play.classList.remove('d-none');
   pause.classList.add('d-none');
+  streaming = false;
 };
 
 /*
@@ -109,14 +112,14 @@ getCameraSelection();
   const FPS = 30;
   function processVideo() {
     try {
-      /*
+
         if (!streaming) {
             // clean and stop.
             src.delete();
             dst.delete();
             return;
         }
-        */
+
 
         //console.log(cap);
         /*
@@ -133,6 +136,7 @@ getCameraSelection();
         let delay = 1000/FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
         */
+
     } catch (err) {
         console.log("error during processing");
         console.log(err);
