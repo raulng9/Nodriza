@@ -117,16 +117,25 @@ getCameraSelection();
             return;
         }
         */
+
+        //console.log(cap);
+        /*
         let begin = Date.now();
+
+
         // start processing.
+
         cap.read(src);
+
         cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
         cv.imshow('openCVOutput', dst);
         // schedule the next one.
         let delay = 1000/FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
+        */
     } catch (err) {
         console.log("error during processing");
+        console.log(err);
     }
 };
 
