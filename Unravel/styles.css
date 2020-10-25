@@ -18,8 +18,10 @@
 	 position: relative;
 }
  video {
-	 width: 100%;
+	 width: 600px;
+	 height: 600px;
 	 background: rgba(0, 0, 0, 0.2);
+	 display: block;
 }
  .video-options {
 	 position: absolute;

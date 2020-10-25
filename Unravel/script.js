@@ -3,7 +3,7 @@ feather.replace();
 const controls = document.querySelector('.controls');
 const cameraOptions = document.querySelector('.video-options>select');
 let video = document.querySelector('#videoInput');
-//const canvas = document.querySelector('canvasOutput');
+let canvasOutput = document.getElementById('canvasOutput');
 //const screenshotImage = document.querySelector('img');
 const buttons = [...controls.querySelectorAll('button')];
 let streamStarted = false;
@@ -103,9 +103,11 @@ const getCameraSelection = async () => {
 getCameraSelection();
 
 
-  let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-  let dst = new cv.Mat(video.height, video.width, cv.CV_8UC1);
-  let cap = new cv.VideoCapture(videoInput);
+  let src = new cv.Mat(600,600, cv.CV_8UC4);
+  let dst = new cv.Mat(600,600, cv.CV_8UC1);
+  video.width = 600;
+  video.height = 600;
+  let cap = new cv.VideoCapture(video);
 
   const FPS = 30;
   function processVideo() {
@@ -134,10 +136,25 @@ getCameraSelection();
         let delay = 1000/FPS - (Date.now() - begin);
         setTimeout(processVideo, delay);
         */
-        console.log("got to the try");
-        console.log(video.videoWidth);
-        console.log(video.videoHeight);
+        //console.log(video.clientHeight);
+        //console.log(video.clientWidth);
+        //console.log(cap);
+        let begin = Date.now();
+        let delay = 1000/FPS - (Date.now() - begin);
+
         cap.read(src);
+
+        let dstForBlur = new cv.Mat();
+        let blurKernelSize = new cv.Size(3,3);
+
+        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+        cv.GaussianBlur(src, dstForBlur, blurKernelSize, 0, 0, cv.BORDER_DEFAULT);
+
+        let dstForFirstEdges = new cv.Mat();
+        let firstEdgesFrame = cv.Canny(dstForBlur, dstForFirstEdges, 75, 200);
+        cv.imshow('canvasOutput', dstForFirstEdges);
+        setTimeout(processVideo, delay);
+
     } catch (err) {
         console.log("error during processing");
         console.log(err);
