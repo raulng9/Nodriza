@@ -139,20 +139,47 @@ getCameraSelection();
         //console.log(video.clientHeight);
         //console.log(video.clientWidth);
         //console.log(cap);
+
+        //Refresh rate and frame read
         let begin = Date.now();
         let delay = 1000/FPS - (Date.now() - begin);
-
         cap.read(src);
 
+
+        //console.log("blurred performed");
+
+        //Color & blur
         let dstForBlur = new cv.Mat();
         let blurKernelSize = new cv.Size(3,3);
-
         cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
         cv.GaussianBlur(src, dstForBlur, blurKernelSize, 0, 0, cv.BORDER_DEFAULT);
 
+        //Edges
         let dstForFirstEdges = new cv.Mat();
-        let firstEdgesFrame = cv.Canny(dstForBlur, dstForFirstEdges, 75, 200);
-        cv.imshow('canvasOutput', dstForFirstEdges);
+        cv.Canny(dstForBlur, dstForFirstEdges, 75, 200);
+
+        //Contours
+        cv.threshold(dstForBlur, dstForBlur, 120,200, cv.THRESH_BINARY);
+
+        let contoursFrame = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        let dstForContours = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC1);
+        let copyOfEdges = dstForBlur.clone();
+        let convertedDst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC1);
+        let matForContours = new cv.Mat();
+        //copyOfEdges.convertTo(matToConvert, cv.CV_8UC1);
+        //Conversion to matrix format accepted by findContours()
+        cv.cvtColor(copyOfEdges, matForContours, cv.COLOR_RGBA2GRAY);
+        cv.findContours(matForContours, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+        //Contour drawing
+        let color = new cv.Scalar(255,0,0,255);
+        for(let i = 0; i<contoursFrame.size();i++){
+          //let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+          cv.drawContours(matForContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
+        }
+
+        cv.imshow('canvasOutput', matForContours);
         setTimeout(processVideo, delay);
 
     } catch (err) {
