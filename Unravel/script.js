@@ -109,7 +109,7 @@ getCameraSelection();
   video.height = 600;
   let cap = new cv.VideoCapture(video);
 
-  const FPS = 30;
+  const FPS = 10;
   function processVideo() {
     try {
         /*
@@ -173,11 +173,50 @@ getCameraSelection();
         cv.findContours(matForContours, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
         //Contour drawing
-        let color = new cv.Scalar(255,0,0,255);
+        //let color = new cv.Scalar(255,0,0,255);
         for(let i = 0; i<contoursFrame.size();i++){
-          //let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+          let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
           cv.drawContours(matForContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
+          //console.log("color applied to contour");
         }
+
+        let contoursBySize = [];
+
+        //At least one contour was found
+        if(contoursFrame.size() > 0){
+          //Contour sorting by area (reversed)
+          //contoursFrame.sort(function(a,b){ return cv.contourArea(a) - cv.contourArea(b);});
+
+          //contoursBySize = contoursFrame.sort((a,b) => cv.contourArea(a) - cv.contourArea(b));
+          console.log(contoursFrame.size());
+          console.log(contoursFrame);
+          //console.log(contoursFrame);
+          //console.log(cv.contourArea(contoursFrame.get(0)));
+        }
+        else{
+          console.log("esto ni de palo");
+        }
+
+        let contoursWithFourCorners = [];
+        //Searching for four corner contours
+        for(var i = 0; i < contoursFrame.size(); i++){
+          var currentContour = contoursFrame.get(i);
+          //Checking for closed curves (true param)
+          let perimeter = cv.arcLength(currentContour, true);
+          //Polygon approximation
+          let approxCurve = new cv.Mat();
+          let approximation = cv.approxPolyDP(currentContour, approxCurve, 0.02 * perimeter,true);
+          if(approximation){
+          if(approximation.size() == 4){
+            contoursWithFourCorners.push(currentContour);
+          }
+        }
+        }
+
+        console.log("length of four corner contours: " + contoursWithFourCorners.length);
+
+
+        //console.log(cv.contourArea(contoursFrame[0]));
 
         cv.imshow('canvasOutput', matForContours);
         setTimeout(processVideo, delay);
@@ -189,4 +228,4 @@ getCameraSelection();
 };
 
 // schedule the first one.
-setTimeout(processVideo, 0);
+//tosetTimeout(processVideo, 0);
