@@ -176,6 +176,7 @@ getCameraSelection();
 
           let poly = new cv.MatVector();
 
+          //Saving of contour data into array (area and index)
           //Searching for four corner contours (NOT WORKING, try using a ruler next time)
           for(var i = 0; i < contoursFrame.size(); i++){
             var currentContour = contoursFrame.get(i);
@@ -186,14 +187,16 @@ getCameraSelection();
             //Polygon approximation
             let approxPoly = new cv.Mat();
             let approximation = cv.approxPolyDP(currentContour, approxPoly, 3,true);
-            poly.push_back(approxPoly);
+            //poly.push_back(approxPoly);
             var valueForCurrentContour = new Array();
             valueForCurrentContour[0] = i;
             valueForCurrentContour[1] = cv.contourArea(currentContour, false);
             listOfIndexesWithArea.push(valueForCurrentContour);
-            if(approximation){
+            if(approxPoly){
             //We found a squared shape
-              if(approximation.size() == 4){
+            console.log("aprox");
+            console.log(approxPoly);
+              if(approximation == 5){
                 mainSquareish = currentContour;
                 console.log("four eyes");
                 break;
@@ -201,11 +204,12 @@ getCameraSelection();
             }
           }
 
+          /*
           for (let i = 0; i < contoursFrame.size(); ++i) {
                 let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
                 cv.drawContours(frameForApproximations, poly, i, color, 1, 8, hierarchy, 0);
           }
-
+          */
 
           listOfIndexesWithArea.sort(sortContoursByArea);
 
@@ -214,20 +218,25 @@ getCameraSelection();
             return b[1] - a[1];
           }
 
-          console.log(listOfIndexesWithArea);
+          let shapedPoly = new cv.Mat();
+          cv.approxPolyDP(contoursFrame.get(listOfIndexesWithArea[0][0]), shapedPoly, 3, true);
+          poly.push_back(shapedPoly);
+
+          let colorBlue = new cv.Scalar(0,0,255);
+          cv.drawContours(frameForApproximations, poly, 0, colorBlue, 1, 8, hierarchy, 0);
+
 
           cv.drawContours(frameForBiggestContour, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
 
           //Call the perspective for the biggest contour found
-          perspectiveTransform(contoursFrame.get(listOfIndexesWithArea[0][0]))
+          perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]))
         }
 
         else{
           console.log("no contours found");
         }
 
-
-        cv.imshow('canvasOutput', frameForBiggestContour);
+        //cv.imshow('canvasOutput', frameForApproximations);
         setTimeout(processVideo, delay);
 
     } catch (err) {
@@ -237,17 +246,28 @@ getCameraSelection();
 };
 
 
-function perspectiveTransform(contourToTransform){
-  let corner1 = new cv.Point(contourToTransform.data32S[0], contourToTransform.data32S[1]);
-  let corner2 = new cv.Point(contourToTransform.data32S[2], contourToTransform.data32S[3]);
-  let corner3 = new cv.Point(contourToTransform.data32S[4], contourToTransform.data32S[5]);
-  let corner4 = new cv.Point(contourToTransform.data32S[6], contourToTransform.data32S[7]);
+function perspectiveTransform(inputImage, contourToTransform){
 
+  let minRectangle = cv.minAreaRect(contourToTransform);
+  let verticesRectangle = cv.RotatedRect.points(minRectangle);
+
+  console.log(verticesRectangle);
+  let corner1 = verticesRectangle[0];
+  let corner2 = verticesRectangle[1];
+  let corner3 = verticesRectangle[2];
+  let corner4 = verticesRectangle[3];
+
+
+/*
+  console.log(corner1);
+  console.log(corner2);
+  console.log(corner3);
+  console.log(corner4);
+*/
   //Order the corners
   let cornerArray = [{ corner: corner1 }, { corner: corner2 }, { corner: corner3 }, { corner: corner4 }];
   //Sort by Y position (to get top-down)
   cornerArray.sort((item1, item2) => { return (item1.corner.y < item2.corner.y) ? -1 : (item1.corner.y > item2.corner.y) ? 1 : 0; }).slice(0, 5);
-
 
   //Determine left/right based on x position of top and bottom 2
   let tl = cornerArray[0].corner.x < cornerArray[1].corner.x ? cornerArray[0] : cornerArray[1];
@@ -268,8 +288,10 @@ function perspectiveTransform(contourToTransform){
   let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.corner.x, tl.corner.y, tr.corner.x, tr.corner.y, br.corner.x, br.corner.y, bl.corner.x, bl.corner.y]);
   let dsize = new cv.Size(theWidth, theHeight);
   let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords);
+  let finalDst = new cv.Mat();
   //TODO: create matDestTransformed and finalDest in the caller function, how to connect them properly?
-  cv.warpPerspective(matDestTransformed, finalDest, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.warpPerspective(src, finalDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  cv.imshow('canvasOutput', finalDst);
 
 }
 
