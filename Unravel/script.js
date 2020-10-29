@@ -4,7 +4,6 @@ const controls = document.querySelector('.controls');
 const cameraOptions = document.querySelector('.video-options>select');
 let video = document.querySelector('#videoInput');
 let canvasOutput = document.getElementById('canvasOutput');
-//const screenshotImage = document.querySelector('img');
 const buttons = [...controls.querySelectorAll('button')];
 let streamStarted = false;
 
@@ -62,18 +61,8 @@ const pauseStream = () => {
   streaming = false;
 };
 
-/*
-const doScreenshot = () => {
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  screenshotImage.src = canvas.toDataURL('image/webp');
-  screenshotImage.classList.remove('d-none');
-};
-*/
 
 pause.onclick = pauseStream;
-//screenshot.onclick = doScreenshot;
 
 const startStream = async (constraints) => {
   const stream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -122,31 +111,12 @@ getCameraSelection();
         */
 
         //console.log(cap);
-        /*
-        let begin = Date.now();
-
-
-        // start processing.
-
-        cap.read(src);
-
-        cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-        cv.imshow('openCVOutput', dst);
-        // schedule the next one.
-        let delay = 1000/FPS - (Date.now() - begin);
-        setTimeout(processVideo, delay);
-        */
-        //console.log(video.clientHeight);
-        //console.log(video.clientWidth);
-        //console.log(cap);
 
         //Refresh rate and frame read
         let begin = Date.now();
         let delay = 1000/FPS - (Date.now() - begin);
         cap.read(src);
 
-
-        //console.log("blurred performed");
 
         //Color & blur
         let dstForBlur = new cv.Mat();
@@ -186,9 +156,7 @@ getCameraSelection();
         let colorfulContours = new cv.Mat.zeros(src.cols,src.rows, cv.CV_8UC3);
         for(let i = 0; i<contoursFrame.size();i++){
           //let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
-          //let color = new cv.Scalar(0,255,0);
           cv.drawContours(colorfulContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
-          //console.log("color applied to contour");
         }
 
         let contoursBySize = [];
@@ -199,10 +167,6 @@ getCameraSelection();
         //At least one contour was found
         if(contoursFrame.size() > 0){
 
-          //Contour sorting by area (reversed)
-          //contoursFrame.sort(function(a,b){ return cv.contourArea(a) - cv.contourArea(b);});
-          //contoursBySize = contoursFrame.sort((a,b) => cv.contourArea(a) - cv.contourArea(b));
-
           console.log(contoursFrame.size());
 
           //Two dimensional array with index of contour and area for it,
@@ -211,12 +175,14 @@ getCameraSelection();
           var listOfIndexesWithArea = [];
 
           let poly = new cv.MatVector();
-          //Searching for four corner contours
+
+          //Searching for four corner contours (NOT WORKING, try using a ruler next time)
           for(var i = 0; i < contoursFrame.size(); i++){
             var currentContour = contoursFrame.get(i);
+
             //Checking for closed curves (true param)
             let perimeter = cv.arcLength(currentContour, true);
-            //console.log("perimeter: " + perimeter);
+
             //Polygon approximation
             let approxPoly = new cv.Mat();
             let approximation = cv.approxPolyDP(currentContour, approxPoly, 3,true);
@@ -241,15 +207,17 @@ getCameraSelection();
           }
 
 
-          listOfIndexesWithArea.sort(sortByArea);
+          listOfIndexesWithArea.sort(sortContoursByArea);
 
-          function sortByArea(a,b){
+          function sortContoursByArea(a,b){
+            //Order contours by area (greater to lower)
             return b[1] - a[1];
           }
 
           console.log(listOfIndexesWithArea);
 
-          cv.drawContours(dstForBlur, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
+          cv.drawContours(frameForBiggestContour, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
+
 
         }
 
@@ -267,40 +235,42 @@ getCameraSelection();
     }
 };
 
-/*
 
-the call on processVideo should be:
-// Find Contours
-const contours = new cv.MatVector();
-const hierarchy = new cv.Mat();
-const thresholded = makeColorMask(img)
-cv.findContours(thresholded, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+function perspectiveTransform(contourToTransform){
+  let corner1 = new cv.Point(contourToTransform.data32S[0], contourToTransform.data32S[1]);
+  let corner2 = new cv.Point(contourToTransform.data32S[2], contourToTransform.data32S[3]);
+  let corner3 = new cv.Point(contourToTransform.data32S[4], contourToTransform.data32S[5]);
+  let corner4 = new cv.Point(contourToTransform.data32S[6], contourToTransform.data32S[7]);
+
+  //Order the corners
+  let cornerArray = [{ corner: corner1 }, { corner: corner2 }, { corner: corner3 }, { corner: corner4 }];
+  //Sort by Y position (to get top-down)
+  cornerArray.sort((item1, item2) => { return (item1.corner.y < item2.corner.y) ? -1 : (item1.corner.y > item2.corner.y) ? 1 : 0; }).slice(0, 5);
 
 
-function makeColorMask(img){
+  //Determine left/right based on x position of top and bottom 2
+  let tl = cornerArray[0].corner.x < cornerArray[1].corner.x ? cornerArray[0] : cornerArray[1];
+  let tr = cornerArray[0].corner.x > cornerArray[1].corner.x ? cornerArray[0] : cornerArray[1];
+  let bl = cornerArray[2].corner.x < cornerArray[3].corner.x ? cornerArray[2] : cornerArray[3];
+  let br = cornerArray[2].corner.x > cornerArray[3].corner.x ? cornerArray[2] : cornerArray[3];
 
-  const blackUpperBound = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255); // change this values
-  const blackLowerBound = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255); // change this values
+  //Calculate the max width/height
+  let widthBottom = Math.hypot(br.corner.x - bl.corner.x, br.corner.y - bl.corner.y);
+  let widthTop = Math.hypot(tr.corner.x - tl.corner.x, tr.corner.y - tl.corner.y);
+  let theWidth = (widthBottom > widthTop) ? widthBottom : widthTop;
+  let heightRight = Math.hypot(tr.corner.x - br.corner.x, tr.corner.y - br.corner.y);
+  let heightLeft = Math.hypot(tl.corner.x - bl.corner.x, tr.corner.y - bl.corner.y);
+  let theHeight = (heightRight > heightLeft) ? heightRight : heightLeft;
 
-  const makeColorMask = (img) => {
-    // filter by color
-    const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
-    const rangeMask = imgHLS.inRange(BlackLowerBound(80), blackUpperBound(140)); // change this values
+  //Transform!
+  let finalDestCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, theWidth - 1, 0, theWidth - 1, theHeight - 1, 0, theHeight - 1]); //
+  let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.corner.x, tl.corner.y, tr.corner.x, tr.corner.y, br.corner.x, br.corner.y, bl.corner.x, bl.corner.y]);
+  let dsize = new cv.Size(theWidth, theHeight);
+  let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords)
+  cv.warpPerspective(matDestTransformed, finalDest, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
 
-    // remove noise
-    const blurred = rangeMask.blur(new cv.Size(10, 10));
-    const thresholded = blurred.threshold(
-      200,
-      255,
-      cv.THRESH_BINARY
-    );
-
-    return thresholded;
-  };
 
 }
-*/
-
 
 // To execute before the camera is started
 //tosetTimeout(processVideo, 0);
