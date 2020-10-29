@@ -218,7 +218,8 @@ getCameraSelection();
 
           cv.drawContours(frameForBiggestContour, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
 
-
+          //Call the perspective for the biggest contour found
+          perspectiveTransform(contoursFrame.get(listOfIndexesWithArea[0][0]))
         }
 
         else{
@@ -266,9 +267,9 @@ function perspectiveTransform(contourToTransform){
   let finalDestCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, theWidth - 1, 0, theWidth - 1, theHeight - 1, 0, theHeight - 1]); //
   let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.corner.x, tl.corner.y, tr.corner.x, tr.corner.y, br.corner.x, br.corner.y, bl.corner.x, bl.corner.y]);
   let dsize = new cv.Size(theWidth, theHeight);
-  let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords)
+  let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords);
+  //TODO: create matDestTransformed and finalDest in the caller function, how to connect them properly?
   cv.warpPerspective(matDestTransformed, finalDest, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-
 
 }
 
