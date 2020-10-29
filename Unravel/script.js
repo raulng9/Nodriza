@@ -109,7 +109,7 @@ getCameraSelection();
   video.height = 600;
   let cap = new cv.VideoCapture(video);
 
-  const FPS = 10;
+  const FPS = 1;
   function processVideo() {
     try {
         /*
@@ -150,16 +150,25 @@ getCameraSelection();
 
         //Color & blur
         let dstForBlur = new cv.Mat();
-        let blurKernelSize = new cv.Size(3,3);
+        let blurKernelSize = new cv.Size(5,5);
         cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
         cv.GaussianBlur(src, dstForBlur, blurKernelSize, 0, 0, cv.BORDER_DEFAULT);
 
+        //Dilation
+        let M = cv.Mat.ones(5, 5, cv.CV_8U);
+        let anchor = new cv.Point(-1, -1);
+        cv.dilate(dstForBlur, dstForBlur, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
         //Edges
         let dstForFirstEdges = new cv.Mat();
-        cv.Canny(dstForBlur, dstForFirstEdges, 75, 200);
+        cv.Canny(dstForBlur, dstForFirstEdges, 50,100);
 
-        //Contours
-        cv.threshold(dstForBlur, dstForBlur, 120,200, cv.THRESH_BINARY);
+
+        //cv.cvtColor(dstForFirstEdges, edgesMonochrome, cv.COLOR_RGBA2GRAY);
+
+
+        //Threshold
+        //cv.threshold(dstForBlur, dstForBlur, 120,200, cv.THRESH_BINARY);
 
         let contoursFrame = new cv.MatVector();
         let hierarchy = new cv.Mat();
@@ -170,55 +179,86 @@ getCameraSelection();
         //copyOfEdges.convertTo(matToConvert, cv.CV_8UC1);
         //Conversion to matrix format accepted by findContours()
         cv.cvtColor(copyOfEdges, matForContours, cv.COLOR_RGBA2GRAY);
-        cv.findContours(matForContours, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+        cv.findContours(dstForFirstEdges, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
         //Contour drawing
-        //let color = new cv.Scalar(255,0,0,255);
+        let color = new cv.Scalar(255,0,0,255);
+        let colorfulContours = new cv.Mat.zeros(src.cols,src.rows, cv.CV_8UC3);
         for(let i = 0; i<contoursFrame.size();i++){
-          let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
-          cv.drawContours(matForContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
+          //let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+          //let color = new cv.Scalar(0,255,0);
+          cv.drawContours(colorfulContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
           //console.log("color applied to contour");
         }
 
         let contoursBySize = [];
 
+        let frameForApproximations = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+        let frameForBiggestContour = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
+
         //At least one contour was found
         if(contoursFrame.size() > 0){
+
           //Contour sorting by area (reversed)
           //contoursFrame.sort(function(a,b){ return cv.contourArea(a) - cv.contourArea(b);});
-
           //contoursBySize = contoursFrame.sort((a,b) => cv.contourArea(a) - cv.contourArea(b));
+
           console.log(contoursFrame.size());
-          console.log(contoursFrame);
-          //console.log(contoursFrame);
-          //console.log(cv.contourArea(contoursFrame.get(0)));
-        }
-        else{
-          console.log("esto ni de palo");
-        }
 
-        let contoursWithFourCorners = [];
-        //Searching for four corner contours
-        for(var i = 0; i < contoursFrame.size(); i++){
-          var currentContour = contoursFrame.get(i);
-          //Checking for closed curves (true param)
-          let perimeter = cv.arcLength(currentContour, true);
-          //Polygon approximation
-          let approxCurve = new cv.Mat();
-          let approximation = cv.approxPolyDP(currentContour, approxCurve, 0.02 * perimeter,true);
-          if(approximation){
-          if(approximation.size() == 4){
-            contoursWithFourCorners.push(currentContour);
+          //Two dimensional array with index of contour and area for it,
+          //later on we sort the array by area and access the first element,
+          //which will be the test sheet square
+          var listOfIndexesWithArea = [];
+
+          let poly = new cv.MatVector();
+          //Searching for four corner contours
+          for(var i = 0; i < contoursFrame.size(); i++){
+            var currentContour = contoursFrame.get(i);
+            //Checking for closed curves (true param)
+            let perimeter = cv.arcLength(currentContour, true);
+            //console.log("perimeter: " + perimeter);
+            //Polygon approximation
+            let approxPoly = new cv.Mat();
+            let approximation = cv.approxPolyDP(currentContour, approxPoly, 3,true);
+            poly.push_back(approxPoly);
+            var valueForCurrentContour = new Array();
+            valueForCurrentContour[0] = i;
+            valueForCurrentContour[1] = cv.contourArea(currentContour, false);
+            listOfIndexesWithArea.push(valueForCurrentContour);
+            if(approximation){
+            //We found a squared shape
+              if(approximation.size() == 4){
+                mainSquareish = currentContour;
+                console.log("four eyes");
+                break;
+              }
+            }
           }
+
+          for (let i = 0; i < contoursFrame.size(); ++i) {
+                let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+                cv.drawContours(frameForApproximations, poly, i, color, 1, 8, hierarchy, 0);
+          }
+
+
+          listOfIndexesWithArea.sort(sortByArea);
+
+          function sortByArea(a,b){
+            return b[1] - a[1];
+          }
+
+          console.log(listOfIndexesWithArea);
+
+          cv.drawContours(dstForBlur, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
+
         }
+
+        else{
+          console.log("no contours found");
         }
 
-        console.log("length of four corner contours: " + contoursWithFourCorners.length);
 
-
-        //console.log(cv.contourArea(contoursFrame[0]));
-
-        cv.imshow('canvasOutput', matForContours);
+        cv.imshow('canvasOutput', frameForBiggestContour);
         setTimeout(processVideo, delay);
 
     } catch (err) {
@@ -227,5 +267,40 @@ getCameraSelection();
     }
 };
 
-// schedule the first one.
+/*
+
+the call on processVideo should be:
+// Find Contours
+const contours = new cv.MatVector();
+const hierarchy = new cv.Mat();
+const thresholded = makeColorMask(img)
+cv.findContours(thresholded, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+
+
+function makeColorMask(img){
+
+  const blackUpperBound = hue => new cv.Vec(hue, 0.8 * 255, 0.6 * 255); // change this values
+  const blackLowerBound = hue => new cv.Vec(hue, 0.1 * 255, 0.05 * 255); // change this values
+
+  const makeColorMask = (img) => {
+    // filter by color
+    const imgHLS = img.cvtColor(cv.COLOR_BGR2HLS);
+    const rangeMask = imgHLS.inRange(BlackLowerBound(80), blackUpperBound(140)); // change this values
+
+    // remove noise
+    const blurred = rangeMask.blur(new cv.Size(10, 10));
+    const thresholded = blurred.threshold(
+      200,
+      255,
+      cv.THRESH_BINARY
+    );
+
+    return thresholded;
+  };
+
+}
+*/
+
+
+// To execute before the camera is started
 //tosetTimeout(processVideo, 0);
