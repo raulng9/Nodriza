@@ -167,6 +167,7 @@ getCameraSelection();
 
           //Saving of contour data into 2D array
           //Searching for four corner contours (NOT WORKING, try using a ruler next time)
+          //Refactor for generic version and use with bubbles as well
           for(var i = 0; i < contoursFrame.size(); i++){
             var currentContour = contoursFrame.get(i);
 
@@ -202,10 +203,6 @@ getCameraSelection();
 
           listOfIndexesWithArea.sort(sortContoursByArea);
 
-          //Order contours by area (greater to lower)
-          function sortContoursByArea(a,b){
-            return b[1] - a[1];
-          }
 
           let shapedPoly = new cv.Mat();
           cv.approxPolyDP(contoursFrame.get(listOfIndexesWithArea[0][0]), shapedPoly, 3, true);
@@ -227,7 +224,21 @@ getCameraSelection();
           //cv.imshow('canvasOutput', dstThreshold);
 
           //let threshCopy = dstThreshold.copy();
-          findBubbles(dstThreshold);
+          let bubbleContoursAll = findBubbles(dstThreshold);
+          var bubbleContoursFiltered = new cv.Mat();
+          //If at least one bubble has been found
+          if(bubbleContoursAll.size() > 0){
+            let bubbleContoursFiltered = filterBubbleContours(bubbleContoursAll);
+            console.log(bubbleContoursFiltered.size() + " real bubbles found");
+            let frameForFilteredBubbles = new cv.Mat();
+            let hierarchyBubblesFiltered = new cv.Mat();
+            let colorGreen = new cv.Scalar(255,0,0);
+            for(let i = 0; i<bubbleContoursFiltered.size();i++){
+              cv.drawContours(frameForFilteredBubbles, bubbleContoursFiltered, i, colorGreen, 1, cv.LINE_8, hierarchyBubblesFiltered, 100);
+            }
+            cv.imshow('canvasOutput', frameForFilteredBubbles);
+          }
+
 
         }
 
@@ -244,25 +255,78 @@ getCameraSelection();
     }
 };
 
+
+function filterBubbleContours(allContours){
+  var listOfValidContours = new cv.MatVector();
+  for(let i = 0; i<allContours.size();i++){
+    let currentContour = allContours.get(i);
+    let rectForCurrent = cv.boundingRect(currentContour);
+    let xCoord = rectForCurrent.x;
+    let yCoord = rectForCurrent.y;
+    let width = rectForCurrent.width;
+    let height = rectForCurrent.height;
+    let aspectRatio = width / parseFloat(height);
+    console.log("Aspect ratio: " + aspectRatio + " " + width + " " + height);
+    if(width >= 20 && height >= 20 && aspectRatio >= 0.9 && aspectRatio <= 1.1){
+      listOfValidContours.push_back(currentContour);
+    }
+  }
+  return listOfValidContours;
+}
+
+//Order contours by area (greater to lower)
+function sortContoursByArea(a,b){
+  return b[1] - a[1];
+}
+
+
+//Refactor to make it generic for contour finding (and apply it in
+//the first contour search)
 function findBubbles(thresholdImage){
 
-  let bubbleEdges = new cv.Mat();
-  cv.Canny(thresholdImage, bubbleEdges, 50,100);
+  let bubbleContoursFrame = new cv.Mat();
+  cv.Canny(thresholdImage, bubbleContoursFrame, 50,100);
 
   //Creation of parameters for contour finding
-  let listOfContours = new cv.MatVector();
+  let listOfBubbleContours = new cv.MatVector();
   let hierarchyBubbles = new cv.Mat();
   //cv.cvtColor(bubbleEdges,bubbleEdges, cv.COLOR_RGBA2GRAY);
-  cv.findContours(bubbleEdges, listOfContours, hierarchyBubbles, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+  cv.findContours(bubbleContoursFrame, listOfBubbleContours, hierarchyBubbles, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
   //Contour drawing
   let color = new cv.Scalar(0,255,0,255);
-  let bubbleContours = new cv.Mat.zeros(thresholdImage.cols,thresholdImage.rows, cv.CV_8UC3);
-  for(let i = 0; i<listOfContours.size();i++){
-    cv.drawContours(bubbleEdges, listOfContours, i, color, 1, cv.LINE_8, hierarchyBubbles, 100);
+  for(let i = 0; i<listOfBubbleContours.size();i++){
+    cv.drawContours(bubbleContoursFrame, listOfBubbleContours, i, color, 1, cv.LINE_8, hierarchyBubbles, 100);
   }
-  console.log(listOfContours.size() + " bubbles found");
-  cv.imshow('canvasOutput', bubbleEdges);
+  //cv.imshow('canvasOutput', bubbleContoursFrame);
+
+  console.log(listOfBubbleContours.size() + " possible bubbles");
+  return listOfBubbleContours;
+}
+
+
+function createContourTwoDimensionalArray(listOfContoursForArray){
+  var contoursAreaArray = [];
+
+  for(var i = 0; i < listOfContoursForArray.size(); i++){
+    var currentContour = listOfContoursForArray.get(i);
+
+    //Checking for closed curves (true param)
+    let perimeter = cv.arcLength(currentContour, true);
+
+    //Polygon approximation
+    let approxPoly = new cv.Mat();
+    let approximation = cv.approxPolyDP(currentContour, approxPoly, 3,true);
+    //poly.push_back(approxPoly);
+    var valueForCurrentContour = new Array();
+    valueForCurrentContour[0] = i;
+    valueForCurrentContour[1] = cv.contourArea(currentContour, false);
+    contoursAreaArray.push(valueForCurrentContour);
+
+  }
+
+  return contoursAreaArray;
+
 }
 
 
