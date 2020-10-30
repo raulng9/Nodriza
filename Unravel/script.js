@@ -110,8 +110,6 @@ getCameraSelection();
         }
         */
 
-        //console.log(cap);
-
         //Refresh rate and frame read
         let begin = Date.now();
         let delay = 1000/FPS - (Date.now() - begin);
@@ -134,31 +132,22 @@ getCameraSelection();
         cv.Canny(dstForBlur, dstForFirstEdges, 50,100);
 
 
-        //cv.cvtColor(dstForFirstEdges, edgesMonochrome, cv.COLOR_RGBA2GRAY);
-
-
-        //Threshold
-        //cv.threshold(dstForBlur, dstForBlur, 120,200, cv.THRESH_BINARY);
-
         let contoursFrame = new cv.MatVector();
         let hierarchy = new cv.Mat();
-        let dstForContours = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC1);
         let copyOfEdges = dstForBlur.clone();
-        let convertedDst = cv.Mat.zeros(src.cols, src.rows, cv.CV_8UC1);
-        let matForContours = new cv.Mat();
+        let matForEdgeConversion = new cv.Mat();
         //copyOfEdges.convertTo(matToConvert, cv.CV_8UC1);
         //Conversion to matrix format accepted by findContours()
-        cv.cvtColor(copyOfEdges, matForContours, cv.COLOR_RGBA2GRAY);
+        cv.cvtColor(copyOfEdges, matForEdgeConversion, cv.COLOR_RGBA2GRAY);
         cv.findContours(dstForFirstEdges, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
         //Contour drawing
         let color = new cv.Scalar(255,0,0,255);
         let colorfulContours = new cv.Mat.zeros(src.cols,src.rows, cv.CV_8UC3);
         for(let i = 0; i<contoursFrame.size();i++){
-          //let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
           cv.drawContours(colorfulContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
         }
-
+        //cv.imshow('canvasOutput', colorfulContours);
         let contoursBySize = [];
 
         let frameForApproximations = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
@@ -167,7 +156,7 @@ getCameraSelection();
         //At least one contour was found
         if(contoursFrame.size() > 0){
 
-          console.log(contoursFrame.size());
+          //console.log(contoursFrame.size());
 
           //Two dimensional array with index of contour and area for it,
           //later on we sort the array by area and access the first element,
@@ -176,7 +165,7 @@ getCameraSelection();
 
           let poly = new cv.MatVector();
 
-          //Saving of contour data into array (area and index)
+          //Saving of contour data into 2D array
           //Searching for four corner contours (NOT WORKING, try using a ruler next time)
           for(var i = 0; i < contoursFrame.size(); i++){
             var currentContour = contoursFrame.get(i);
@@ -194,8 +183,8 @@ getCameraSelection();
             listOfIndexesWithArea.push(valueForCurrentContour);
             if(approxPoly){
             //We found a squared shape
-            console.log("aprox");
-            console.log(approxPoly);
+            //console.log("aprox");
+            //console.log(approxPoly);
               if(approximation == 5){
                 mainSquareish = currentContour;
                 console.log("four eyes");
@@ -232,9 +221,13 @@ getCameraSelection();
           let isolatedMainRect = perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]));
 
           let dstThreshold = new cv.Mat();
-          cv.threshold(isolatedMainRect, dstThreshold, 0, 255, cv.THRESH_BINARY_INV);
+          let threshResult = cv.threshold(isolatedMainRect, dstThreshold, 100, 255, cv.THRESH_BINARY&cv.THRESH_OTSU);
+          //console.log("thresh done");
+          //console.log(threshResult);
+          //cv.imshow('canvasOutput', dstThreshold);
 
-          cv.imshow('canvasOutput', dstThreshold);
+          //let threshCopy = dstThreshold.copy();
+          findBubbles(dstThreshold);
 
         }
 
@@ -251,13 +244,33 @@ getCameraSelection();
     }
 };
 
+function findBubbles(thresholdImage){
+
+  let bubbleEdges = new cv.Mat();
+  cv.Canny(thresholdImage, bubbleEdges, 50,100);
+
+  //Creation of parameters for contour finding
+  let listOfContours = new cv.MatVector();
+  let hierarchyBubbles = new cv.Mat();
+  //cv.cvtColor(bubbleEdges,bubbleEdges, cv.COLOR_RGBA2GRAY);
+  cv.findContours(bubbleEdges, listOfContours, hierarchyBubbles, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  //Contour drawing
+  let color = new cv.Scalar(0,255,0,255);
+  let bubbleContours = new cv.Mat.zeros(thresholdImage.cols,thresholdImage.rows, cv.CV_8UC3);
+  for(let i = 0; i<listOfContours.size();i++){
+    cv.drawContours(bubbleEdges, listOfContours, i, color, 1, cv.LINE_8, hierarchyBubbles, 100);
+  }
+  console.log(listOfContours.size() + " bubbles found");
+  cv.imshow('canvasOutput', bubbleEdges);
+}
+
 
 function perspectiveTransform(inputImage, contourToTransform){
 
   let minRectangle = cv.minAreaRect(contourToTransform);
   let verticesRectangle = cv.RotatedRect.points(minRectangle);
 
-  console.log(verticesRectangle);
   let corner1 = verticesRectangle[0];
   let corner2 = verticesRectangle[1];
   let corner3 = verticesRectangle[2];
@@ -288,9 +301,9 @@ function perspectiveTransform(inputImage, contourToTransform){
   let dsize = new cv.Size(theWidth, theHeight);
   let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords);
   let finalDst = new cv.Mat();
+
   //TODO: create matDestTransformed and finalDest in the caller function, how to connect them properly?
   cv.warpPerspective(src, finalDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  //cv.imshow('canvasOutput', finalDst);
 
   return finalDst;
 
