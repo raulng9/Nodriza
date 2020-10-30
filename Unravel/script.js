@@ -213,8 +213,8 @@ getCameraSelection();
 
           listOfIndexesWithArea.sort(sortContoursByArea);
 
+          //Order contours by area (greater to lower)
           function sortContoursByArea(a,b){
-            //Order contours by area (greater to lower)
             return b[1] - a[1];
           }
 
@@ -229,7 +229,13 @@ getCameraSelection();
           cv.drawContours(frameForBiggestContour, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
 
           //Call the perspective for the biggest contour found
-          perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]))
+          let isolatedMainRect = perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]));
+
+          let dstThreshold = new cv.Mat();
+          cv.threshold(isolatedMainRect, dstThreshold, 0, 255, cv.THRESH_BINARY_INV);
+
+          cv.imshow('canvasOutput', dstThreshold);
+
         }
 
         else{
@@ -257,13 +263,6 @@ function perspectiveTransform(inputImage, contourToTransform){
   let corner3 = verticesRectangle[2];
   let corner4 = verticesRectangle[3];
 
-
-/*
-  console.log(corner1);
-  console.log(corner2);
-  console.log(corner3);
-  console.log(corner4);
-*/
   //Order the corners
   let cornerArray = [{ corner: corner1 }, { corner: corner2 }, { corner: corner3 }, { corner: corner4 }];
   //Sort by Y position (to get top-down)
@@ -291,7 +290,9 @@ function perspectiveTransform(inputImage, contourToTransform){
   let finalDst = new cv.Mat();
   //TODO: create matDestTransformed and finalDest in the caller function, how to connect them properly?
   cv.warpPerspective(src, finalDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
-  cv.imshow('canvasOutput', finalDst);
+  //cv.imshow('canvasOutput', finalDst);
+
+  return finalDst;
 
 }
 
