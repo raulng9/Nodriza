@@ -18,9 +18,34 @@
 
 p#mainTitle{
   font-size: 54px;
+  display: none;
+  margin: 100px auto;
+  text-align: center;
+}
+
+p#secondTitle{
+  width: 500px;
+  font-size: 54px;
   display: block;
   margin: 100px auto;
   text-align: center;
+  word-spacing: 7px;
+}
+
+span.typewriterMark{
+  font-size: 90px;
+  font-weight: lighter;
+  vertical-align: middle;
+  margin-left: -1.5px;
+}
+
+div#verticalLine{
+    width: 1px;
+    background-color: black;
+    height: 55px;
+    display:inline-block;
+    margin: 0;
+    padding: 0;
 }
 
 ul{
