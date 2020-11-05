@@ -23,15 +23,13 @@ $(document).ready(function() {
 });
 
 function blinkMarker(){
-  var fadeTime = 400;
+  var fadeTime = 450;
   $("div#verticalLine").fadeOut(fadeTime);
   $("div#verticalLine").fadeIn(fadeTime);
   $("div#verticalLine").fadeOut(fadeTime);
   $("div#verticalLine").fadeIn(fadeTime);
   $("div#verticalLine").fadeOut(fadeTime);
-  $("div#verticalLine").fadeIn(fadeTime);
-  $("div#verticalLine").fadeOut(fadeTime);
-  setTimeout(simulateSelection, fadeTime*7);
+  setTimeout(simulateSelection, fadeTime*5);
 }
 
 function simulateSelection(){
