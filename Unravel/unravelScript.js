@@ -92,10 +92,10 @@ const getCameraSelection = async () => {
 getCameraSelection();
 
 
-  let src = new cv.Mat(600,600, cv.CV_8UC4);
-  let dst = new cv.Mat(600,600, cv.CV_8UC1);
-  video.width = 600;
-  video.height = 600;
+  let src = new cv.Mat(800,800, cv.CV_8UC4);
+  let dst = new cv.Mat(800,800, cv.CV_8UC1);
+  video.width = 800;
+  video.height = 800;
   let cap = new cv.VideoCapture(video);
 
   const FPS = 1;
@@ -135,10 +135,8 @@ getCameraSelection();
         let contoursFrame = new cv.MatVector();
         let hierarchy = new cv.Mat();
         let copyOfEdges = dstForBlur.clone();
-        let matForEdgeConversion = new cv.Mat();
-        //copyOfEdges.convertTo(matToConvert, cv.CV_8UC1);
+
         //Conversion to matrix format accepted by findContours()
-        cv.cvtColor(copyOfEdges, matForEdgeConversion, cv.COLOR_RGBA2GRAY);
         cv.findContours(dstForFirstEdges, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
         //Contour drawing
@@ -182,24 +180,9 @@ getCameraSelection();
             valueForCurrentContour[0] = i;
             valueForCurrentContour[1] = cv.contourArea(currentContour, false);
             listOfIndexesWithArea.push(valueForCurrentContour);
-            if(approxPoly){
-              if(approximation == 4){
-                mainSquareish = currentContour;
-                console.log("four eyes");
-                break;
-              }
-            }
           }
-
-          /*
-          for (let i = 0; i < contoursFrame.size(); ++i) {
-                let color = new cv.Scalar(Math.round(Math.random() * 255), Math.round(Math.random() * 255), Math.round(Math.random() * 255));
-                cv.drawContours(frameForApproximations, poly, i, color, 1, 8, hierarchy, 0);
-          }
-          */
 
           listOfIndexesWithArea.sort(sortContoursByArea);
-
 
           let shapedPoly = new cv.Mat();
           cv.approxPolyDP(contoursFrame.get(listOfIndexesWithArea[0][0]), shapedPoly, 3, true);
@@ -215,11 +198,12 @@ getCameraSelection();
           let isolatedMainRect = perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]));
 
           let dstThreshold = new cv.Mat();
-          let threshResult = cv.threshold(isolatedMainRect, dstThreshold, 100, 255, cv.THRESH_BINARY&cv.THRESH_OTSU);
-          //console.log("thresh done");
-          //console.log(threshResult);
-          //cv.imshow('canvasOutput', dstThreshold);
+          cv.threshold(isolatedMainRect, dstThreshold, 100, 255, cv.THRESH_BINARY&cv.THRESH_OTSU);
 
+          //cv.imshow('canvasOutput', dstThreshold);
+          findCircles(isolatedMainRect);
+
+          /*
           let bubbleContoursAll = findBubbles(dstThreshold);
           var bubbleContoursFiltered = new cv.Mat();
           let frameForFilteredBubbles = new cv.Mat();
@@ -232,10 +216,9 @@ getCameraSelection();
             for(let i = 0; i<bubbleContoursFiltered.size();i++){
               cv.drawContours(frameForFilteredBubbles, bubbleContoursFiltered, i, colorGreen, 1, cv.LINE_8, hierarchyBubblesFiltered, 100);
             }
-            cv.imshow('canvasOutput', frameForFilteredBubbles);
+          //  cv.imshow('canvasOutput', frameForFilteredBubbles);
           }
-
-
+*/
         }
 
         else{
@@ -251,7 +234,7 @@ getCameraSelection();
     }
 };
 
-
+/*
 function filterBubbleContours(allContours){
   var listOfValidContours = new cv.MatVector();
   for(let i = 0; i<allContours.size();i++){
@@ -269,13 +252,14 @@ function filterBubbleContours(allContours){
   }
   return listOfValidContours;
 }
+*/
 
 //Order contours by area (greater to lower)
 function sortContoursByArea(a,b){
   return b[1] - a[1];
 }
 
-
+/*
 //Refactor to make it generic for contour finding (and apply it in
 //the first contour search)
 function findBubbles(thresholdImage){
@@ -299,19 +283,19 @@ function findBubbles(thresholdImage){
   let M = cv.Mat.ones(5, 5, cv.CV_8U);
   let anchor = new cv.Point(-1, -1);
   cv.dilate(bubbleContoursFrame, bubbleContoursFrame, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-  //cv.imshow('canvasOutput', bubbleContoursFrame);
+  cv.imshow('canvasOutput', bubbleContoursFrame);
 
   console.log(listOfBubbleContours.size() + " possible bubbles");
   return listOfBubbleContours;
 }
+*/
 
-/*
 function findCircles(bubbleContoursFrame){
   let src = bubbleContoursFrame;
   let dstBubbles = cv.Mat.zeros(bubbleContoursFrame.rows, bubbleContoursFrame.cols, cv.CV_8U);
   let circles = new cv.Mat();
   let color = new cv.Scalar(255,0,0);
-  //cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
+  cv.cvtColor(src,src,cv.COLOR_RGBA2GRAY,0);
   cv.HoughCircles(src, circles, cv.HOUGH_GRADIENT,1, 60, 75, 45, 0, 0);
   for (let i = 0; i < circles.cols; ++i) {
                   let x = circles.data32F[i * 3];
@@ -322,7 +306,7 @@ function findCircles(bubbleContoursFrame){
   }
   cv.imshow('canvasOutput', dstBubbles);
 }
-*/
+
 function createContourTwoDimensionalArray(listOfContoursForArray){
   var contoursAreaArray = [];
 
@@ -377,7 +361,7 @@ function perspectiveTransform(inputImage, contourToTransform){
   let heightLeft = Math.hypot(tl.corner.x - bl.corner.x, tr.corner.y - bl.corner.y);
   let theHeight = (heightRight > heightLeft) ? heightRight : heightLeft;
 
-  //Transform!
+  //Transform
   let finalDestCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, theWidth - 1, 0, theWidth - 1, theHeight - 1, 0, theHeight - 1]); //
   let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.corner.x, tl.corner.y, tr.corner.x, tr.corner.y, br.corner.x, br.corner.y, bl.corner.x, bl.corner.y]);
   let dsize = new cv.Size(theWidth, theHeight);

@@ -1,4 +1,4 @@
-@font-face {
+@font-face{
     font-family: 'robotothin';
     src: url('Font/Roboto-Thin-webfont.eot');
     src: url('Font/Roboto-Thin-webfont.eot?#iefix') format('embedded-opentype'),
@@ -7,13 +7,12 @@
          url('Font/Roboto-Thin-webfont.svg#robotothin') format('svg');
     font-weight: normal;
     font-style: normal;
-
 }
-
 
 *{
   font-family:'robotothin';
   background-color: white;
+  user-select: none;
 }
 
 p#mainTitle{
@@ -29,15 +28,17 @@ p#secondTitle{
   display: block;
   margin: 100px auto;
   text-align: center;
-  word-spacing: 7px;
+  word-spacing: 8px;
 }
 
+/*
 span.typewriterMark{
   font-size: 90px;
   font-weight: lighter;
   vertical-align: middle;
   margin-left: -1.5px;
 }
+*/
 
 div#verticalLine{
     width: 1px;
@@ -49,25 +50,87 @@ div#verticalLine{
 }
 
 ul{
-  width: 500px;
+  width: 600px;
   font-size: 32px;
-  display: block;
-  margin: 150px auto;
+  margin: 0 auto;
   text-align: center;
   list-style: none;
+  padding-left: 0;
 }
-
-a{
-  text-decoration: none;
-  color: black;
+/*
+@keyframes bg {
+    0% {
+        background-size:    0 3px,
+                            3px 0,
+                            0 3px,
+                            3px 0;
+    }
+    25% {
+        background-size:    100% 3px,
+                            3px 0,
+                            0 3px,
+                            3px 0;
+    }
+    50% {
+        background-size:    100% 3px,
+                            3px 100%,
+                            0 3px,
+                            3px 0;
+    }
+    75% {
+        background-size:    100% 3px,
+                            3px 100%,
+                            100% 3px,
+                            3px 0;
+    }
+    100% {
+        background-size:    100% 3px,
+                            3px 100%,
+                            100% 3px,
+                            3px 100%;
+    }
 }
-
-li{
-  padding: 25px;
-  border-bottom: 1px solid transparent;
+*/
+li {
+    width: 90%;
+    margin: 70px auto;
+    padding: 10px;
+    display: inline-block;
+    background-image: none;
+    text-align: center;
+    letter-spacing: 2px;
+    border-bottom: 2px solid white;
 }
 
 li:hover{
-  border-bottom: 1px solid black;
-  cursor: pointer;
+  border-bottom: 2px solid black;
+}
+/*
+TODO:::::::::.
+https://codepen.io/bhautikbharadava/pen/OdPzdW
+*/
+
+/*
+li:hover {
+      background-repeat: no-repeat;
+      animation-play-state: running;
+      cursor:pointer;
+      background-image:   linear-gradient(to right, #C9C9C9 100%, #C9C9C9 100%),
+                        linear-gradient(to bottom, #C9C9C9 100%, #C9C9C9 100%),
+                        linear-gradient(to right, #C9C9C9 100%, #C9C9C9 100%),
+                        linear-gradient(to bottom, #C9C9C9 100%, #C9C9C9 100%);
+      background-size:    100% 3px,
+                        3px 100%,
+                        100% 3px,
+                        3px 100%;
+      background-position:    0 0,
+                            100% 0,
+                            100% 100%,
+                            0 100%;
+      animation: bg .6s cubic-bezier(0.19, 1, 0.22, 1) 1;
+}
+*/
+a{
+  text-decoration: none;
+  color: black;
 }
