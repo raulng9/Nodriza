@@ -31,15 +31,6 @@ p#secondTitle{
   word-spacing: 8px;
 }
 
-/*
-span.typewriterMark{
-  font-size: 90px;
-  font-weight: lighter;
-  vertical-align: middle;
-  margin-left: -1.5px;
-}
-*/
-
 div#verticalLine{
     width: 1px;
     background-color: black;
@@ -57,80 +48,6 @@ ul{
   list-style: none;
   padding-left: 0;
 }
-/*
-@keyframes bg {
-    0% {
-        background-size:    0 3px,
-                            3px 0,
-                            0 3px,
-                            3px 0;
-    }
-    25% {
-        background-size:    100% 3px,
-                            3px 0,
-                            0 3px,
-                            3px 0;
-    }
-    50% {
-        background-size:    100% 3px,
-                            3px 100%,
-                            0 3px,
-                            3px 0;
-    }
-    75% {
-        background-size:    100% 3px,
-                            3px 100%,
-                            100% 3px,
-                            3px 0;
-    }
-    100% {
-        background-size:    100% 3px,
-                            3px 100%,
-                            100% 3px,
-                            3px 100%;
-    }
-}
-
-li {
-    width: 90%;
-    margin: 70px auto;
-    padding: 10px;
-    display: inline-block;
-    background-image: none;
-    text-align: center;
-    letter-spacing: 2px;
-    border-bottom: 2px solid white;
-}
-
-
-li:hover{
-  border-bottom: 2px solid black;
-}
-
-
-https://codepen.io/bhautikbharadava/pen/OdPzdW
-*/
-
-/*
-li:hover {
-      background-repeat: no-repeat;
-      animation-play-state: running;
-      cursor:pointer;
-      background-image:   linear-gradient(to right, #C9C9C9 100%, #C9C9C9 100%),
-                        linear-gradient(to bottom, #C9C9C9 100%, #C9C9C9 100%),
-                        linear-gradient(to right, #C9C9C9 100%, #C9C9C9 100%),
-                        linear-gradient(to bottom, #C9C9C9 100%, #C9C9C9 100%);
-      background-size:    100% 3px,
-                        3px 100%,
-                        100% 3px,
-                        3px 100%;
-      background-position:    0 0,
-                            100% 0,
-                            100% 100%,
-                            0 100%;
-      animation: bg .6s cubic-bezier(0.19, 1, 0.22, 1) 1;
-}
-*/
 
 a{
   text-decoration: none;
@@ -153,6 +70,9 @@ li{
   transition: all 1s;
 }
 
+
+/* Normal effect just the corners of the borders*/
+
 li.linkWithNormalBorder:after, li.linkWithNormalBorder:before {
     content: " ";
     width: 10px;
@@ -168,26 +88,21 @@ li.linkWithNormalBorder:after {
     border-top: 2px solid black;
     border-left: 2px solid black;
   }
-  li.linkWithNormalBorder:before {
+li.linkWithNormalBorder:before {
     bottom: 10px;
     right: 10px;
     border-bottom: 2px solid black;
     border-right: 2px solid black;
   }
-  li.linkWithFullBorder {
+
+  /* Effect on start and on hover */
+
+li.linkWithFullBorder, li.linkWithHoverBorder:hover {
     border-top-right-radius: 0px;
     border-bottom-left-radius: 0px;
   }
-  li.linkWithFullBorder:before, li.linkWithFullBorder:after {
+li.linkWithFullBorder:before, li.linkWithFullBorder:after, li.linkWithHoverBorder:hover:before, li.linkWithHoverBorder:hover:after {
     width: 100%;
     height: 100%;
-  }
-  li.linkWithHoverBorder:hover {
-    border-top-right-radius: 0px;
-    border-bottom-left-radius: 0px;
-  }
-  li.linkWithHoverBorder:hover:before, li.linkWithHoverBorder:hover:after {
-    width: 100%;
-    height: 100%;
-  }
+}
 }
