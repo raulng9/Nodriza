@@ -5,6 +5,7 @@ var lettersToSimulate = textToSimulate.split("");
 let verticalLine = "<div id='verticalLine'></div>";
 
 $(document).ready(function() {
+  activateBorders();
   let randomModifier = Math.floor(Math.random() * (300 - 200 + 1)) + 200;
   console.log(randomModifier);
   //var typewriterMark = "I";
@@ -21,6 +22,12 @@ $(document).ready(function() {
     }, randomModifier*index);
   });
 });
+
+function activateBorders(){
+  $("li").addClass("linkWithFullBorder");
+  setTimeout(function(){ $("li").removeClass("linkWithFullBorder"); }, 2000);
+}
+
 
 function blinkMarker(){
   var fadeTime = 450;

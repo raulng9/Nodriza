@@ -90,7 +90,7 @@ ul{
                             3px 100%;
     }
 }
-*/
+
 li {
     width: 90%;
     margin: 70px auto;
@@ -102,11 +102,12 @@ li {
     border-bottom: 2px solid white;
 }
 
+
 li:hover{
   border-bottom: 2px solid black;
 }
-/*
-TODO:::::::::.
+
+
 https://codepen.io/bhautikbharadava/pen/OdPzdW
 */
 
@@ -130,7 +131,55 @@ li:hover {
       animation: bg .6s cubic-bezier(0.19, 1, 0.22, 1) 1;
 }
 */
+
 a{
   text-decoration: none;
   color: black;
+}
+
+li{
+  width: 90%;
+  margin: 70px auto;
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 2px;
+  cursor: pointer;
+  position: relative;
+  padding: 30px 20px;
+  background: white;
+  font-size: 28px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  transition: all 1s;
+}
+
+li.linkWithFullBorder:after, li.linkWithFullBorder:before {
+    content: " ";
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    border: 0px solid #fff;
+    transition: all 1s;
+  }
+
+li.linkWithFullBorder:after {
+    top: 10px;
+    left: 10px;
+    border-top: 2px solid black;
+    border-left: 2px solid black;
+  }
+  li.linkWithFullBorder:before {
+    bottom: 10px;
+    right: 10px;
+    border-bottom: 2px solid black;
+    border-right: 2px solid black;
+  }
+  li.linkWithFullBorder:hover {
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+  li.linkWithFullBorder:hover:before, li:hover:after {
+    width: 100%;
+    height: 100%;
+  }
 }
