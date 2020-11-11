@@ -153,7 +153,7 @@ li{
   transition: all 1s;
 }
 
-li.linkWithFullBorder:after, li.linkWithFullBorder:before {
+li.linkWithNormalBorder:after, li.linkWithNormalBorder:before {
     content: " ";
     width: 10px;
     height: 10px;
@@ -162,23 +162,31 @@ li.linkWithFullBorder:after, li.linkWithFullBorder:before {
     transition: all 1s;
   }
 
-li.linkWithFullBorder:after {
+li.linkWithNormalBorder:after {
     top: 10px;
     left: 10px;
     border-top: 2px solid black;
     border-left: 2px solid black;
   }
-  li.linkWithFullBorder:before {
+  li.linkWithNormalBorder:before {
     bottom: 10px;
     right: 10px;
     border-bottom: 2px solid black;
     border-right: 2px solid black;
   }
-  li.linkWithFullBorder:hover {
+  li.linkWithFullBorder {
     border-top-right-radius: 0px;
     border-bottom-left-radius: 0px;
   }
-  li.linkWithFullBorder:hover:before, li:hover:after {
+  li.linkWithFullBorder:before, li.linkWithFullBorder:after {
+    width: 100%;
+    height: 100%;
+  }
+  li.linkWithHoverBorder:hover {
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+  }
+  li.linkWithHoverBorder:hover:before, li.linkWithHoverBorder:hover:after {
     width: 100%;
     height: 100%;
   }
