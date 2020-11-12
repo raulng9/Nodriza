@@ -72,10 +72,8 @@ const startStream = async (constraints) => {
 
 const handleStream = (stream) => {
   video.srcObject = stream;
-  //video.play();
   play.classList.add('d-none');
   pause.classList.remove('d-none');
-  //screenshot.classList.remove('d-none');
   processVideo();
 };
 
@@ -122,6 +120,10 @@ getCameraSelection();
         cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
         cv.GaussianBlur(src, dstForBlur, blurKernelSize, 0, 0, cv.BORDER_DEFAULT);
 
+        ////-------------------------
+        let dstAfterBlur = applyBlurAndDilation(src);
+        ////-------------------------
+
         //Dilation
         let M = cv.Mat.ones(5, 5, cv.CV_8U);
         let anchor = new cv.Point(-1, -1);
@@ -131,10 +133,20 @@ getCameraSelection();
         let dstForFirstEdges = new cv.Mat();
         cv.Canny(dstForBlur, dstForFirstEdges, 50,100);
 
+        ////-----------------------
+        let dstFirstEdges = getEdges(dstForFirstEdges);
+        ////-----------------------
+
+        ////-----------------------
+        let contoursFirstPass = getContours(dstFirstEdges);
+        ////-----------------------
+
+        ////-----------------------
+        let frameWithContoursDrawn = drawContours(contoursFirstPass);
+        ////-----------------------
 
         let contoursFrame = new cv.MatVector();
         let hierarchy = new cv.Mat();
-        let copyOfEdges = dstForBlur.clone();
 
         //Conversion to matrix format accepted by findContours()
         cv.findContours(dstForFirstEdges, contoursFrame, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
@@ -145,54 +157,16 @@ getCameraSelection();
         for(let i = 0; i<contoursFrame.size();i++){
           cv.drawContours(colorfulContours, contoursFrame, i, color, 1, cv.LINE_8, hierarchy, 100);
         }
-        //cv.imshow('canvasOutput', colorfulContours);
-        let contoursBySize = [];
-
-        let frameForApproximations = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
-        let frameForBiggestContour = cv.Mat.zeros(src.rows, src.cols, cv.CV_8UC3);
 
         //At least one contour was found
         if(contoursFrame.size() > 0){
 
-          //console.log(contoursFrame.size());
-
-          //Two dimensional array with index of contour and area for it,
-          //later on we sort the array by area and access the first element,
-          //which will be the test sheet square
-          var listOfIndexesWithArea = [];
-
+          //Two dimensional array with index of contour and area for it
+          var contoursListTwoDim = [];
           let poly = new cv.MatVector();
-
-          //Saving of contour data into 2D array
-          //Searching for four corner contours (NOT WORKING, try using a ruler next time)
-          //Refactor for generic version and use with bubbles as well
-          for(var i = 0; i < contoursFrame.size(); i++){
-            var currentContour = contoursFrame.get(i);
-
-            //Checking for closed curves (true param)
-            let perimeter = cv.arcLength(currentContour, true);
-
-            //Polygon approximation
-            let approxPoly = new cv.Mat();
-            let approximation = cv.approxPolyDP(currentContour, approxPoly, 3,true);
-            //poly.push_back(approxPoly);
-            var valueForCurrentContour = new Array();
-            valueForCurrentContour[0] = i;
-            valueForCurrentContour[1] = cv.contourArea(currentContour, false);
-            listOfIndexesWithArea.push(valueForCurrentContour);
-          }
+          let listOfIndexesWithArea = createContourTwoDimensionalArray(contoursListTwoDim);
 
           listOfIndexesWithArea.sort(sortContoursByArea);
-
-          let shapedPoly = new cv.Mat();
-          cv.approxPolyDP(contoursFrame.get(listOfIndexesWithArea[0][0]), shapedPoly, 3, true);
-          poly.push_back(shapedPoly);
-
-          let colorBlue = new cv.Scalar(0,0,255);
-          cv.drawContours(frameForApproximations, poly, 0, colorBlue, 1, 8, hierarchy, 0);
-
-
-          cv.drawContours(frameForBiggestContour, contoursFrame,listOfIndexesWithArea[0][0], color, 1, 8, hierarchy, 0);
 
           //Call the perspective for the biggest contour found
           let isolatedMainRect = perspectiveTransform(src,contoursFrame.get(listOfIndexesWithArea[0][0]));
@@ -202,30 +176,12 @@ getCameraSelection();
 
           //cv.imshow('canvasOutput', dstThreshold);
           findCircles(isolatedMainRect);
-
-          /*
-          let bubbleContoursAll = findBubbles(dstThreshold);
-          var bubbleContoursFiltered = new cv.Mat();
-          let frameForFilteredBubbles = new cv.Mat();
-          //If at least one bubble has been found
-          if(bubbleContoursAll.size() > 0){
-            let bubbleContoursFiltered = filterBubbleContours(bubbleContoursAll);
-            console.log(bubbleContoursFiltered.size() + " real bubbles found");
-            let hierarchyBubblesFiltered = new cv.Mat();
-            let colorGreen = new cv.Scalar(255,0,0);
-            for(let i = 0; i<bubbleContoursFiltered.size();i++){
-              cv.drawContours(frameForFilteredBubbles, bubbleContoursFiltered, i, colorGreen, 1, cv.LINE_8, hierarchyBubblesFiltered, 100);
-            }
-          //  cv.imshow('canvasOutput', frameForFilteredBubbles);
-          }
-*/
         }
 
         else{
           console.log("no contours found");
         }
 
-        //cv.imshow('canvasOutput', frameForApproximations);
         setTimeout(processVideo, delay);
 
     } catch (err) {
@@ -258,37 +214,6 @@ function filterBubbleContours(allContours){
 function sortContoursByArea(a,b){
   return b[1] - a[1];
 }
-
-/*
-//Refactor to make it generic for contour finding (and apply it in
-//the first contour search)
-function findBubbles(thresholdImage){
-
-  let bubbleContoursFrame = new cv.Mat();
-  cv.Canny(thresholdImage, bubbleContoursFrame, 50,100);
-
-  //Creation of parameters for contour finding
-  let listOfBubbleContours = new cv.MatVector();
-  let hierarchyBubbles = new cv.Mat();
-  //cv.cvtColor(bubbleEdges,bubbleEdges, cv.COLOR_RGBA2GRAY);
-
-  cv.findContours(bubbleContoursFrame, listOfBubbleContours, hierarchyBubbles, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-  //Contour drawing
-  let color = new cv.Scalar(0,255,0,255);
-  for(let i = 0; i<listOfBubbleContours.size();i++){
-    cv.drawContours(bubbleContoursFrame, listOfBubbleContours, i, color, 1, cv.LINE_8, hierarchyBubbles, 100);
-  }
-  //Dilation
-  let M = cv.Mat.ones(5, 5, cv.CV_8U);
-  let anchor = new cv.Point(-1, -1);
-  cv.dilate(bubbleContoursFrame, bubbleContoursFrame, M, anchor, 1, cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
-  cv.imshow('canvasOutput', bubbleContoursFrame);
-
-  console.log(listOfBubbleContours.size() + " possible bubbles");
-  return listOfBubbleContours;
-}
-*/
 
 function findCircles(bubbleContoursFrame){
   let src = bubbleContoursFrame;
@@ -324,13 +249,9 @@ function createContourTwoDimensionalArray(listOfContoursForArray){
     valueForCurrentContour[0] = i;
     valueForCurrentContour[1] = cv.contourArea(currentContour, false);
     contoursAreaArray.push(valueForCurrentContour);
-
   }
-
   return contoursAreaArray;
-
 }
-
 
 function perspectiveTransform(inputImage, contourToTransform){
 
@@ -374,6 +295,3 @@ function perspectiveTransform(inputImage, contourToTransform){
   return finalDst;
 
 }
-
-// To execute before the camera is started
-//tosetTimeout(processVideo, 0);
