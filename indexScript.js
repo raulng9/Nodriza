@@ -1,12 +1,12 @@
 //Simulate typewriter style
 var textToSimulate = $("#mainTitle").text();
 var lettersToSimulate = textToSimulate.split("");
-var alreadyVisited = localStorage.getItem("already_visited");
+var alreadyVisited = sessionStorage.getItem("already_visited");
 let verticalLine = "<div id='verticalLine'></div>";
 
 $(document).ready(function() {
   if(!alreadyVisited){
-    localStorage.setItem("already_visited", true);
+    sessionStorage.setItem("already_visited", true);
   }else{
     $("#mainTitle").text("Raúl Núñez García");
     $("#mainTitle").css("display", "block");
