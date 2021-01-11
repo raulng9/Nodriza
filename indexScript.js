@@ -1,14 +1,21 @@
 //Simulate typewriter style
 var textToSimulate = $("#mainTitle").text();
 var lettersToSimulate = textToSimulate.split("");
-
+var alreadyVisited = localStorage.getItem("already_visited");
 let verticalLine = "<div id='verticalLine'></div>";
 
 $(document).ready(function() {
+  if(!alreadyVisited){
+    localStorage.setItem("already_visited", true);
+  }else{
+    $("#mainTitle").text("Raúl Núñez García");
+    $("#mainTitle").css("display", "block");
+    $("li").addClass("linkWithHoverBorder");
+    return;
+  }
   activateBorders();
   let randomModifier = Math.floor(Math.random() * (300 - 200 + 1)) + 200;
   console.log(randomModifier);
-  //var typewriterMark = "I";
   lettersToSimulate.forEach(function enterSlowly(element, index, array){
     setTimeout(function(){
       if(index != 0){
@@ -49,28 +56,3 @@ function simulateBold(){
   $("p#secondTitle").css("background-color", "transparent");
   $("p#secondTitle").css("font-weight", "bolder");
 }
-
-/*
-$("li").on("mouseover",
-  simulateLinkCreation
-);
-
-$("li").on("mouseout", undoLinkCreation);
-
-function undoLinkCreation(){
-  $("li").css("border-bottom","none");
-  $("li").css("font-weight", "normal");
-}
-
-function simulateLinkCreation(){
-  $("li").css("background-color", "rgb(179,216,253)");
-  setTimeout(simulateUnderline,400);
-}
-
-function simulateUnderline(){
-  $("li").css("background-color", "transparent");
-  $("li").css("border-bottom", "1px solid black");
-  $("li").css("font-weight", "bolder");
-}
-
-*/

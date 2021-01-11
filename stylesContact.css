@@ -1,0 +1,72 @@
+a#goBackLink{
+  display: block;
+  margin: 80px auto;
+  text-align: center;
+  width: 400px;
+  padding:50px;
+}
+
+img.goBackImageNotHovered{
+  width: 40px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 20px;
+  position: relative;
+  right: -50px;
+  transition: right 0.6s ease;
+}
+
+img.goBackImageHovered{
+  width: 40px;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 20px;
+  position: relative;
+  right: 50px;
+  transition: right 0.6s ease;
+}
+
+span#goBackText{
+  font-size: 26px;
+  vertical-align: middle;
+}
+
+span.returnTextNotHover{
+  visibility: hidden;
+  opacity: 0;
+  font-size: 24px;
+  vertical-align: middle;
+  transition: opacity 0.0s ease;
+  position: relative;
+  left: 80px;
+}
+
+span.returnTextHover{
+  visibility: visible;
+  opacity: 1;
+  font-size: 24px;
+  vertical-align: middle;
+  transition: opacity 0.6s ease;
+  position: relative;
+  left: -10px;
+}
+
+img.linkImage{
+  width: 30px;
+}
+
+li{
+  width: 80%;
+  margin: 40px auto;
+  display: inline-block;
+  text-align: center;
+  letter-spacing: 2px;
+  cursor: pointer;
+  position: relative;
+  padding: 20px 10px;
+  background: white;
+  font-size: 20px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  transition: all 1s;
+}
